@@ -1,2 +1,169 @@
 # hpsjr-sand-gravel-systems
 Systems analysis and process modeling for HPSJR Sand Gravel order-to-cash operations
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>HPSJR Sand Gravel: Systems Analysis (Complete)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#fff;--fg:#1c1b19;--mut:#6b6a66;--card:#f4f2ee;--ln:#c9c6bf;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1a18;--fg:#eceae4;--mut:#a09e98;--card:#262624;--ln:#4a4946}}
+:root[data-theme="dark"]{--bg:#1a1a18;--fg:#eceae4;--mut:#a09e98;--card:#262624;--ln:#4a4946}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0 auto;padding:20px;max-width:1100px}
+h1{font-size:1.6rem;margin:0 0 .3rem}h2{font-size:1.25rem;margin:2.2rem 0 .5rem;border-bottom:1px solid var(--ln);padding-bottom:.2rem}h3{font-size:1.05rem;margin:1.6rem 0 .4rem}
+.m{color:var(--mut)}table{border-collapse:collapse;width:100%;font-size:.9rem;margin:.6rem 0}th,td{border:1px solid var(--ln);padding:5px 8px;text-align:left;vertical-align:top}th{background:var(--card)}
+.tw{overflow-x:auto}.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;padding:8px;margin:.5rem 0}
+svg text{fill:var(--fg);font:12px system-ui,sans-serif}svg .s{font-size:11px;fill:var(--mut)}svg .b{font-weight:600;font-size:12px}svg .el{font-size:11px;paint-order:stroke;stroke:var(--bg);stroke-width:4px;stroke-linejoin:round}
+.o{stroke:var(--fg);stroke-width:1.5;fill:none}.f{fill:var(--card)}.d{stroke-dasharray:6 4}.k{fill:var(--fg)}.th{stroke-width:4}.x{stroke-width:2.5}.pl{stroke:var(--ln)}.t2{stroke-width:2.5}
+.mk{fill:var(--fg)}.mo{fill:var(--bg);stroke:var(--fg)}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path class="mk" d="M0 0L10 5L0 10z"/></marker>
+<marker id="oh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path class="mo" d="M0 0L10 5L0 10z"/></marker>
+<marker id="mc" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6"><circle class="mo" cx="5" cy="5" r="4"/></marker>
+</defs></svg>
+<div id="c"></div>
+<script>
+/* ---------- shared helpers ---------- */
+const T=(x,y,t,c='')=>`<text class="${c}" x="${x}" y="${y}" text-anchor="middle">${t}</text>`;
+function wrap(t,x,y,n,c=''){const w=t.split(' ');let L=[],s='';w.forEach(k=>{if((s+' '+k).trim().length>n){L.push(s);s=k}else s=(s+' '+k).trim()});L.push(s);const y0=y-(L.length-1)*7;return L.map((l,i)=>T(x,y0+i*14+4,l,c)).join('')}
+const svgW=(w,h,b)=>`<div class="sc"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${b}</svg></div>`;
+/* ---------- Gane-Sarson DFD ---------- */
+const SN={D1:'Orders',D2:'Stock Ledger',D3:'Loading and Batch',D4:'Delivery Status',D5:'Payments',D6:'Production and Batch Log'};
+const SZ={p:[170,66],s:[160,42],e:[130,46],x:[170,52]};
+const P=(k,n,l,x,y)=>[k,'p',n,l,x,y],E=(k,l,x,y)=>[k,'e','',l,x,y],X=(k,n,l,x,y)=>[k,'x',n,l,x,y],D=(k,x,y,l,n)=>[k,'s',n||k,l||SN[k],x,y];
+function drawN(n){const[k,t,num,l,x,y]=n,[w,h]=SZ[t];
+if(t=='p')return `<rect class="o f" x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="10"/><path class="o" d="M${x-w/2} ${y-h/2+18}H${x+w/2}"/>`+T(x,y-h/2+13,num,'b')+wrap(l,x,y+9,24);
+if(t=='s')return `<path class="o f" d="M${x+w/2} ${y-h/2}H${x-w/2}V${y+h/2}H${x+w/2}"/><path class="o" d="M${x-w/2+34} ${y-h/2}V${y+h/2}"/>`+T(x-w/2+17,y+4,num,'b')+wrap(l,x+17,y,19);
+if(t=='e')return `<rect class="o f t2" x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}"/>`+wrap(l,x,y,18);
+return `<rect class="o d f" x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="10"/>`+wrap(num+' '+l,x,y,24)}
+function out(P0,Q,c,w,h){for(let i=0;i<=300;i++){const t=i/300,x=P0[0]+(Q[0]-P0[0])*t,y=P0[1]+(Q[1]-P0[1])*t;if(Math.abs(x-c[0])>w/2||Math.abs(y-c[1])>h/2)return[x,y]}return Q}
+function edge(M,e){const[a,b,lab,off=0,via=[]]=e,A=M[a],B=M[b];let p=[[A[4],A[5]],...via,[B[4],B[5]]];
+const dx=p[p.length-1][0]-p[0][0],dy=p[p.length-1][1]-p[0][1],L=Math.hypot(dx,dy)||1,nx=-dy/L*off,ny=dx/L*off;
+p=p.map(q=>[q[0]+nx,q[1]+ny]);const m=p.length-1,p0=p[0].slice(),pm=p[m].slice();
+p[0]=out(p0,p[1],[A[4],A[5]],...SZ[A[1]]);p[m]=out(pm,p[m-1].slice?(m==1?p0:p[m-1]):p0,[B[4],B[5]],...SZ[B[1]]);
+let best=0,bi=0;for(let i=0;i<m;i++){const d=Math.hypot(p[i+1][0]-p[i][0],p[i+1][1]-p[i][1]);if(d>best){best=d;bi=i}}
+const lx=(p[bi][0]+p[bi+1][0])/2,ly=(p[bi][1]+p[bi+1][1])/2;
+return [`<polyline class="o" fill="none" points="${p.map(q=>q.map(v=>v.toFixed(1)).join(',')).join(' ')}" marker-end="url(#ah)"/>`,lab?T(lx.toFixed(1),(ly-4).toFixed(1),lab,'el'):'']}
+function dfd(w,h,nodes,edges){const M={};nodes.forEach(n=>M[n[0]]=n);const es=edges.map(e=>edge(M,e));
+return svgW(w,h,nodes.map(drawN).join('')+es.map(e=>e[0]).join('')+es.map(e=>e[1]).join(''))}
+/* ---------- BPMN ---------- */
+const task=(x,y,t,w=120,h=56)=>`<rect class="o f" x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="8"/>`+wrap(t,x,y,17);
+const sub=(x,y,t)=>`<rect class="o f" x="${x-65}" y="${y-32}" width="130" height="64" rx="8"/>`+wrap(t,x,y-6,17)+`<rect class="o" x="${x-7}" y="${y+20}" width="14" height="9"/><path class="o" d="M${x-4} ${y+24.5}h8M${x} ${y+21}v7"/>`;
+const lab=(x,y,t)=>T(x,y,t,'s');
+const start=(x,y,l)=>`<circle class="o f" cx="${x}" cy="${y}" r="16"/>`+(l?lab(x,y+34,l):'');
+const mstart=(x,y,l)=>start(x,y,l)+`<rect class="o" x="${x-7}" y="${y-5}" width="14" height="10"/><path class="o" d="M${x-7} ${y-5}L${x} ${y+1}L${x+7} ${y-5}"/>`;
+const tstart=(x,y,l)=>start(x,y,l)+`<circle class="o" cx="${x}" cy="${y}" r="10"/><path class="o" d="M${x} ${y-7}V${y}L${x+5} ${y+3}"/>`;
+const end=(x,y,l)=>`<circle class="o f th" cx="${x}" cy="${y}" r="16"/>`+(l?lab(x,y+34,l):'');
+const term=(x,y,l)=>end(x,y,l)+`<circle class="k" cx="${x}" cy="${y}" r="8"/>`;
+const gw=(x,y,l,ly)=>`<polygon class="o f" points="${x},${y-22} ${x+22},${y} ${x},${y+22} ${x-22},${y}"/><path class="o x" d="M${x-7} ${y-7}L${x+7} ${y+7}M${x+7} ${y-7}L${x-7} ${y+7}"/>`+(l?wrap(l,x,ly,16,'s'):'');
+const fl=(p,d)=>`<polyline class="o ${d?'d':''}" fill="none" points="${p.map(a=>a.join(',')).join(' ')}" `+(d?'marker-start="url(#mc)" marker-end="url(#oh)"':'marker-end="url(#ah)"')+'/>';
+const band=(x,y,h,n,w=28)=>`<rect class="o pl" x="${x}" y="${y}" width="${w}" height="${h}"/><text class="b" transform="translate(${x+w/2},${y+h/2}) rotate(-90)" text-anchor="middle">${n}</text>`;
+const box=(x,y,w,h)=>`<rect class="o pl" x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+const legend=(y)=>T(30,y-32,'Legend','b')+start(40,y,'Start')+mstart(130,y,'Message start')+tstart(230,y,'Timer start')+end(320,y,'End')+term(400,y,'Terminate')+task(510,y,'Task',90,40)+gw(620,y,'Exclusive gateway',y+40)+sub(740,y,'Sub-process')+fl([[820,y],[880,y]])+lab(850,y+22,'Sequence flow')+fl([[940,y],[1010,y]],1)+lab(975,y+22,'Message flow');
+
+/* BPMN 1 */
+let a=box(10,20,1400,110)+band(10,20,110,'Customer')+box(10,150,1400,360)+band(10,150,360,'HPSJR Sand Gravel')+box(38,150,1372,120)+band(38,150,120,'Office staff',24)+box(38,270,1372,120)+band(38,270,120,'Loading crew',24)+box(38,390,1372,120)+band(38,390,120,'Driver',24);
+a+=start(90,75,'Needs material')+task(190,75,'Request material and quantity')+task(570,75,'Accept quote')+task(1280,75,'Pay cash or cheque')+end(1380,75,'Receipt received')+fl([[106,75],[130,75]])+fl([[250,75],[510,75]])+fl([[630,75],[1220,75]])+fl([[1340,75],[1364,75]]);
+a+=mstart(90,210,'Order received')+task(190,210,'Record order, assign order no.')+task(330,210,'Check stock per aggregate type')+gw(450,210,'Enough stock?',172)+task(570,210,'Quote and confirm')+task(740,210,'Reserve stock (status: Preparing)')+task(1280,210,'Issue receipt, record payment')+end(1380,210,'Order closed');
+a+=fl([[106,210],[130,210]])+fl([[250,210],[270,210]])+fl([[390,210],[428,210]])+fl([[472,210],[510,210]])+lab(491,203,'Yes')+fl([[630,210],[680,210]])+fl([[1340,210],[1364,210]]);
+a+=sub(450,330,'Shortage and replenishment (see 6.2)')+fl([[450,232],[450,298]])+lab(462,258,'No')+fl([[515,330],[570,330],[570,238]])+lab(655,324,'Stock restored or partial')+fl([[385,330],[316,330]])+term(300,330,'')+lab(300,365,'Cannot supply (cancelled)');
+a+=task(740,330,'Load and measure')+fl([[740,238],[740,302]])+fl([[800,330],[838,330]])+gw(860,330,'Loaded = ordered?',292)+task(1000,330,'Record variance and additional batch')+fl([[882,330],[940,330]])+lab(912,323,'No')+fl([[1060,330],[1090,330]])+task(1150,330,'Deduct stock by loaded qty')+fl([[860,352],[860,378],[1150,378],[1150,358]])+lab(1000,392,'Yes');
+a+=task(1150,450,'Deliver, update status')+fl([[1150,358],[1150,422]])+task(1280,450,'Confirm receipt at site')+fl([[1210,450],[1220,450]])+fl([[1280,422],[1280,238]]);
+a+=fl([[190,103],[190,182]],1)+fl([[550,182],[550,103]],1)+fl([[590,103],[590,150],[740,150],[740,182]],1)+fl([[1280,103],[1280,182]],1)+fl([[1380,194],[1380,91]],1)+lab(190,150,'order request')+lab(500,150,'quote')+lab(665,143,'acceptance')+lab(1318,150,'payment')+lab(1400,150,'receipt')+legend(570);
+const B1=svgW(1420,640,a);
+/* BPMN 2 */
+let b=box(10,20,1010,300)+band(10,20,300,'Shortage')+box(38,20,982,120)+band(38,20,120,'Owner / office',24)+box(38,140,982,180)+band(38,140,180,'Production crew',24);
+b+=start(80,80,'Shortage found')+task(190,80,'Alert owner and production')+gw(470,80,'Customer accepts delay?',38)+term(560,80,'')+lab(560,115,'Order cancelled')+task(820,80,'Notify customer')+end(960,80,'Done')+fl([[96,80],[130,80]])+fl([[190,108],[190,200],[258,200]]);
+b+=gw(280,200,'Equipment and river OK?',162)+task(400,200,'Haul more material')+task(540,200,'Screen or crush')+task(680,200,'Record batch output by type')+task(820,200,'Add to stock (cite batch no.)')+fl([[302,200],[340,200]])+lab(321,193,'Yes')+fl([[460,200],[480,200]])+fl([[600,200],[620,200]])+fl([[740,200],[760,200]])+fl([[820,172],[820,108]])+fl([[880,80],[944,80]]);
+b+=fl([[280,222],[280,275],[340,275]])+lab(292,250,'No')+task(400,275,'Log downtime or flood',120,50)+fl([[460,275],[470,275],[470,102]])+fl([[448,80],[400,80],[400,172]])+lab(424,73,'Yes')+fl([[492,80],[544,80]])+lab(518,73,'No');
+const B2=svgW(1030,340,b);
+/* BPMN 3 recurring */
+let c=box(10,10,1010,370)+band(10,10,370,'Recurring')+box(38,10,982,120)+band(38,10,120,'Daily',24)+box(38,130,982,120)+band(38,130,120,'Weekly',24)+box(38,250,982,130)+band(38,250,130,'Monthly',24);
+c+=tstart(90,70,'Every day')+task(210,70,'Review stock and reservations')+task(360,70,'Count stockpile, compare to ledger')+gw(510,70,'Difference?',32)+task(650,70,'Owner approves adjustment')+task(800,70,'Close out deliveries')+end(940,70,'')+fl([[106,70],[150,70]])+fl([[270,70],[300,70]])+fl([[420,70],[488,70]])+fl([[532,70],[590,70]])+lab(561,63,'Yes')+fl([[710,70],[740,70]])+fl([[860,70],[924,70]])+fl([[510,92],[510,110],[800,110],[800,98]])+lab(655,124,'No');
+c+=tstart(90,190,'Every week')+task(210,190,'Review loading variances and batches')+task(360,190,'Follow up unpaid and uncleared cheques')+task(510,190,'Weekly receivables list')+end(640,190,'')+fl([[106,190],[150,190]])+fl([[270,190],[300,190]])+fl([[420,190],[450,190]])+fl([[570,190],[624,190]]);
+c+=tstart(90,315,'Every month')+task(210,315,'Production, downtime, sales report')+task(360,315,'Update prices and master data')+task(510,315,'Archive old records')+end(640,315,'')+fl([[106,315],[150,315]])+fl([[270,315],[300,315]])+fl([[420,315],[450,315]])+fl([[570,315],[624,315]]);
+const B3=svgW(1030,390,c);
+/* BPMN 4 admin void/correct */
+let d=box(10,20,900,290)+band(10,20,290,'Void or correct')+box(38,20,872,110)+band(38,20,110,'Office staff',24)+box(38,130,872,180)+band(38,130,180,'Owner',24);
+d+=start(90,75,'Error found')+task(210,75,'Request correction with reason')+task(210,195,'Review record and reason')+gw(360,195,'Approve?',150)+task(520,195,'Mark record void, keep history')+task(700,75,'Enter corrected record')+end(840,75,'Record corrected')+term(360,250,'')+lab(360,285,'Rejected, staff informed');
+d+=fl([[106,75],[150,75]])+fl([[210,103],[210,167]])+fl([[270,195],[338,195]])+fl([[382,195],[460,195]])+lab(420,188,'Yes')+fl([[580,195],[700,195],[700,103]])+fl([[760,75],[824,75]])+fl([[360,217],[360,234]])+lab(372,226,'No');
+const B4=svgW(920,320,d);
+
+/* ---------- DFD diagrams ---------- */
+const CTX=dfd(1000,420,[P('P','0','HPSJR Order, Stock and Delivery System',500,210),E('C','Customer',110,90),E('O','Owner',110,330),E('M','Material Source',890,90),E('B','Bank',890,330)],
+[['C','P','order request, payment',10],['P','C','availability, quote, delivery status, receipt',10],['O','P','policies, approvals, reorder levels',10],['P','O','exception, stock and sales reports',10],['M','P','hauled material',10],['P','M','haul request',10],['P','B','cheque for deposit',10],['B','P','clearing result',10]]);
+const L0=dfd(1100,780,[E('C','Customer',620,40),E('B','Bank',1020,40),E('MS','Material Source',1030,500),E('O','Owner',70,720),
+P('P1','1.0','Take and Validate Order',260,190),P('P3','3.0','Load and Reconcile',500,190),P('P4','4.0','Deliver and Track',740,190),P('P5','5.0','Collect Payment',980,190),P('P2','2.0','Manage Stock',170,560),P('P6','6.0','Produce and Replenish',740,560),P('P7','7.0','Administer and Report',260,720),
+D('D1',200,370),D('D3',560,370),D('D4',760,370),D('D5',960,370),D('D2',360,560),D('D6',850,660)],
+[['C','P1','order request',10],['P1','C','availability, quote',10],['P1','D1','C: order'],['P1','D2','R/U: availability, reserve'],['P2','D2','R/U: stock level'],['P2','P6','shortage alert',0,[[170,630],[740,630]]],
+['D1','P3','R: approved order',10],['P3','D1','U: order loaded',10],['P3','D3','C: load, variance, batch'],['P3','D2','U: deduct stock'],['P3','P4','loaded truck'],
+['P4','D4','C/U: status'],['D3','P4','R: loading'],['D4','P5','R: delivery ref'],['P4','C','delivery status'],['P4','P5','delivery confirmation'],
+['C','P5','payment',10],['P5','C','receipt',10],['P5','D5','C/U: payment'],['P5','D1','R/U: balance'],['P5','B','cheque',10],['B','P5','clearing',10],
+['P6','D2','R/U: reorder check, add stock'],['P6','D6','C/U: batch output'],['MS','P6','material',10],['P6','MS','haul request',10],
+['O','P7','policy, approvals',10],['P7','O','reports',10],['P7','D1','R/U/D: orders, void',0,[[40,650],[40,370]]],['P7','D5','R/U/D: payments',0,[[960,720]]],['P7','D6','R/D: production']]);
+const L1=dfd(1060,470,[E('C','Customer',90,110),P('a','1.1','Record Request',300,110),P('b','1.2','Check Availability',520,110),P('c','1.3','Quote and Confirm',740,110),P('d','1.4','Reserve Stock',740,290),X('x','6.0','Produce and Replenish',960,290),D('D1',300,400),D('D2',520,400)],
+[['C','a','material, qty'],['a','D1','C: draft order, order no.'],['a','b',''],['b','D2','R: available qty'],['b','c','enough'],['b','x','short'],['c','C','quote',0,[[700,25],[110,25]]],['C','c','accept',0,[[70,60],[780,60]]],['c','D1','U: confirmed'],['c','d','confirmed order'],['d','D2','U: reserved qty']]);
+const L2=dfd(1060,520,[X('p3','3.0','Load and Reconcile',100,120),X('p6','6.0','Produce and Replenish',100,300),P('a','2.1','Post Stock Movement',360,210),P('b','2.2','Compute Available',580,210),P('c','2.3','Check Reorder Level',800,210),P('d','2.4','Daily Count and Adjust',360,420),D('D2',580,420),E('O','Owner',960,100),X('q','6.0','Produce and Replenish',960,330)],
+[['p3','a','issue'],['p6','a','receipt'],['a','D2','C: movement line'],['a','b',''],['b','D2','R/U: on-hand, reserved, available'],['b','c',''],['c','O','alert'],['c','q','shortage alert'],['d','D2','R/U: count vs ledger, adjustment']]);
+const L3=dfd(1060,520,[P('a','3.1','Issue Loading Slip',200,110),P('b','3.2','Load and Measure',420,110),P('c','3.3','Compare to Ordered',640,110),P('e','3.5','Deduct Stock',860,110),P('f','3.4','Record Variance and Additional Batch',640,270),D('D1',200,400),D('D3',640,420),D('D2',860,400)],
+[['D1','a','R: order'],['a','b','loading slip'],['b','c','loaded qty'],['c','e','match'],['c','f','differs'],['f','e','variance noted'],['f','D3','C: variance, batch ref'],['e','D3','C: load record'],['e','D2','U: deduct stock'],['e','D1','U: order loaded']]);
+const L4=dfd(1060,470,[X('p3','3.0','Load and Reconcile',100,110),P('a','4.1','Dispatch Truck',330,110),P('b','4.2','Update Status',560,110),P('c','4.3','Confirm Delivery',790,110),X('p5','5.0','Collect Payment',960,300),D('D3',330,380),D('D4',560,380),E('S','Staff or customer',820,380)],
+[['p3','a','loaded truck'],['D3','a','R: loaded order'],['a','b',''],['b','c',''],['a','D4','C: dispatched'],['b','D4','U: en route, delayed'],['c','D4','U: completed, receiver, time'],['D4','S','R: status inquiry'],['c','p5','delivery confirmation']]);
+const L5=dfd(1060,540,[X('p4','4.0','Deliver and Track',90,120),E('C','Customer',90,330),P('a','5.1','Compute Amount Due',320,170),P('b','5.3','Receive Cheque',570,190),P('e','5.2','Receive Cash',570,330),P('f','5.4','Record Clearing',790,330),E('B','Bank',960,190),D('D3',130,480),D('D4',330,480),D('D1',530,480),D('D5',790,480)],
+[['p4','a','delivery confirmation'],['a','C','amount due'],['C','e','cash',-10],['e','C','receipt',-10],['C','b','cheque'],['b','B','cheque for deposit'],['B','f','clearing result'],['e','D5','C: payment'],['b','D5','C: cheque record'],['f','D5','U: cleared or bounced'],['e','D1','U: balance'],['D1','a','R: order, price'],['D3','a','R: loaded qty'],['D4','a','R: delivery ref']]);
+const L6=dfd(1060,520,[X('p2','2.0','Manage Stock',90,70),E('MS','Material Source',90,240),P('a','6.1','Request Haul',330,70),P('b','6.2','Receive Hauled Material',330,240),P('c','6.3','Screen or Crush',570,240),P('e','6.5','Add to Stock',810,240),P('f','6.4','Log Downtime or Flood',810,70),E('K','Production crew',980,70),D('D2',90,440),D('D6',570,440)],
+[['p2','a','shortage alert'],['a','MS','haul request'],['MS','b','hauled material'],['D2','a','R: stock, reorder level'],['b','D6','C: raw volume'],['b','c','raw stockpile'],['c','D6','C: batch no., output by type'],['c','e','batch'],['D6','e','R: batch qty'],['e','D2','U: add stock, cite batch no.'],['K','f','downtime or flood report'],['f','D6','C: downtime or flood entry']]);
+const L7=dfd(1000,660,[E('O','Owner',90,300),P('a','7.1','Maintain Master Data',330,60),P('b','7.2','Approve Stock Adjustment',330,170),P('c','7.3','Void or Correct Record',330,280),P('d','7.4','Produce Periodic Reports',330,400),P('e','7.5','View Transaction Trail',330,490),P('f','7.6','Archive Records',330,580),D('D1',720,60),D('D2',720,170),D('D3',720,280),D('D5',720,390),D('DA',720,540,'All stores','D1-D6')],
+[['O','a','master data'],['O','b','approval'],['O','c','void authorization'],['d','O','periodic reports'],['e','O','transaction trail'],['O','f','archive approval'],['a','D1','C/U: customers, prices'],['b','D2','R/U: system qty, adjustment'],['c','D1','U: void with reason'],['c','D3','U: variance correction'],['c','D5','U: payment correction'],['d','DA','R: all stores'],['e','DA','R: by order no.'],['f','DA','D: archive after retention']]);
+
+/* ---------- document ---------- */
+const H=(t,l=2)=>`<h${l}>${t}</h${l}>`,Pp=t=>`<p>${t}</p>`;
+const doc=[
+`<h1>HPSJR Sand Gravel: Systems Analysis</h1><p class="m">Dalas, Labo, Camarines Norte. Tags follow the Statement of the Problem: <b>[C]</b> client-stated, <b>[S]</b> analyst-stated, <b>[A]</b> assumption to confirm. The system modeled is the proposed integrated order-to-cash system; the paper process is the baseline. No loss, error or delay figures are claimed. Notation: DFDs use Gane-Sarson symbols (rounded box with ID strip = process, open-ended box = data store, double-line box = external entity, dashed box = process in another diagram). Process models use BPMN 2.0. Scroll diagrams sideways on a phone.</p>`,
+H('1. Data Stores'),`<div class="tw"><table><tr><th>ID</th><th>Store</th><th>Holds</th></tr><tr><td>D1</td><td>Orders</td><td>Order no., customer, material, qty, price, status, balance, master data</td></tr><tr><td>D2</td><td>Stock Ledger</td><td>Movement lines; on-hand, reserved and available per material and size</td></tr><tr><td>D3</td><td>Loading and Batch</td><td>Loaded qty, variance, additional batch, each linked to the order no.</td></tr><tr><td>D4</td><td>Delivery Status</td><td>Preparing, Loaded, Dispatched, Delayed, Completed; receiver and time</td></tr><tr><td>D5</td><td>Payments</td><td>Cash receipts, cheques, clearing result, order and delivery reference</td></tr><tr><td>D6</td><td>Production and Batch Log</td><td>Hauled volume, screening or crushing batches with output per aggregate type, downtime, flooding</td></tr></table></div>`,
+H('2. Context Diagram'),CTX,Pp(`<b>Discussion.</b> The whole business is one system boundary with four outside parties: the customer (order and payment), the owner (control decisions), the material source, and the bank (cheque clearing for bulk and government orders [A]). The owner currently sees nothing consolidated [A]; the context diagram makes the owner's report flow explicit. The material source flow matters because shortages [C] start here: a haul request should be triggered by stock data, not by someone noticing a low pile.`),
+H('3. Level 0 Diagram'),L0,Pp(`<b>Discussion.</b> Seven processes replace the separate paper records. Process 2.0 is a distinct function because stock is today updated by hand with no real-time in and out tracking [A], which causes overlooked items [A]. Processes 1.0, 3.0 and 6.0 all use D2, so there is one stock figure instead of several copies. Process 3.0 holds the loading discrepancy problem [S], and 4.0 makes delivery status shared instead of on one person's paper [S]. Process 5.0 reads delivery and loading data so payment follows what was delivered. Every data flow touching a store is labeled with its CRUD letter.`),
+H('4. Explosion Levels (Level 1)'),
+H('4.1 Explosion of 1.0 Take and Validate Order',3),L1,Pp(`The order number created in 1.1 is the key that links every later record. Whether one exists today is unconfirmed [A], and it is the main decision for tracing an order to completed delivery [S]. Reservation in 1.4 stops two staff selling the same pile during sudden or bulk orders [C]. A shortage is a path, not an error: the customer can be offered partial supply, a later date or another size, so a sale is not simply lost [C].`),
+H('4.2 Explosion of 2.0 Manage Stock',3),L2,Pp(`Every receipt and issue is a movement line, so stock is derived and never overwritten by hand. This addresses overlooked stock [A]. The daily count (2.4) is a physical estimate in cubic meters reconciled to the ledger, and the owner approves any adjustment (7.2). Stock of an aggregate type is credited only from recorded production batches, because the mix is known only after screening or crushing [C].`),
+H('4.3 Explosion of 3.0 Load and Reconcile',3),L3,Pp(`The Statement of the Problem says loaded quantity follows the order [A], so a difference can only arise from an under-fill or over-fill noticed later; how it is noticed is unconfirmed (section 9). The design stores the measured load beside the ordered quantity so a variance is a calculation, not an observation. An additional batch is a child record carrying the parent order number, which removes the effort of linking earlier cases to order and loading [S]. Stock is deducted by actual loaded quantity.`),
+H('4.4 Explosion of 4.0 Deliver and Track',3),L4,Pp(`Statuses are Preparing (set at reservation), Loaded, Dispatched, Delayed and Completed. Because they sit in a shared store, any staff member can answer a customer without asking the person who holds the paper [S]. Proof of receipt captured in 4.3 supports government project deliveries [A].`),
+H('4.5 Explosion of 5.0 Collect Payment',3),L5,Pp(`5.1 reads the order, the loaded quantity and the delivery reference, so the amount due follows what was delivered. How the amount is computed is unconfirmed [A]. Cash on delivery puts money handling at the delivery site, the highest-risk point, so every receipt carries the order number. Cheques from bulk buyers go through the bank and the result updates D5 (5.4). Who receives payment is unconfirmed [A].`),
+H('4.6 Explosion of 6.0 Produce and Replenish',3),L6,Pp(`A haul request (6.1) starts from the stock alert. Hauled material is mixed and its aggregate types are known only after screening or crushing [C], so each batch (6.3) records its output per type and 6.5 posts stock citing the batch number; the posted quantity must equal the batch quantity. Equipment downtime, screener problems and river flooding [C] become recorded events (6.4), which gives the owner evidence for buffer-stock decisions.`),
+H('4.7 Explosion of 7.0 Administer and Report',3),L7,Pp(`Administrative work is owner-controlled: master data, approval of stock adjustments, voiding or correcting records, periodic reports, the transaction trail, and archiving. The transaction trail (7.5) returns the order, loading, variance, batch, delivery and payment records from one order number. Records are never physically deleted during operations; a void is an update with a reason, and a true delete happens only on archive after the retention period, with owner approval.`),
+H('5. CRUD Matrix by Data Store'),`<div class="tw"><table><tr><th>Process</th><th>D1 Orders</th><th>D2 Stock</th><th>D3 Loading</th><th>D4 Delivery</th><th>D5 Payments</th><th>D6 Production</th></tr>
+<tr><td>1.0 Order</td><td>C, U</td><td>R, U</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>2.0 Stock</td><td></td><td>C, R, U</td><td></td><td></td><td></td><td>R</td></tr>
+<tr><td>3.0 Load</td><td>R, U</td><td>U</td><td>C, R</td><td></td><td></td><td></td></tr>
+<tr><td>4.0 Deliver</td><td>R</td><td></td><td>R</td><td>C, U</td><td></td><td></td></tr>
+<tr><td>5.0 Payment</td><td>R, U</td><td></td><td>R</td><td>R</td><td>C, U</td><td></td></tr>
+<tr><td>6.0 Produce</td><td></td><td>R, U</td><td></td><td></td><td></td><td>C, R, U</td></tr>
+<tr><td>7.0 Admin</td><td>C, R, U, D</td><td>R, U, D</td><td>R, U, D</td><td>R, D</td><td>R, U, D</td><td>R, D</td></tr></table></div>`,
+Pp(`<b>Events.</b> <b>C</b>: order taken, movement posted, load recorded, status created, payment received, batch logged. <b>U</b>: reservation, deduction, status change, balance update, cheque clearing, approved adjustment, void. <b>R</b>: availability check, loading slip, status inquiry, reports, transaction trail. <b>D</b>: archive of records after the retention period, approved by the owner (7.6), the only point where a record leaves live operations.`),
+H('6. Business Process Modeling and Notation (BPMN)'),
+H('6.1 Main process: Order to Cash',3),B1,Pp(`<b>Discussion.</b> The customer is a separate pool, so everything crossing between customer and company is a dashed message. Gateway 1 (enough stock?) is where overlooked stock hurts today; here it reads a live figure per aggregate type before the quote. The "No" path goes into the shortage sub-process (6.2), which restores stock, allows partial supply and rejoins at the quote, or ends the order. Gateway 2 (loaded = ordered?) is the loading discrepancy point: a difference records the variance and any additional batch against the order number, then stock is deducted by what was loaded. Delivery and receipt confirmation feed payment, so the receipt carries order and delivery references.`),
+H('6.2 Sub-process: Shortage and Replenishment',3),B2,Pp(`<b>Discussion.</b> A shortage has two causes with different fixes. If the screener is down or the river is flooded, hauling more does not help, so the event is logged and the customer decides whether to wait. If production is possible, material is hauled, screened or crushed, each batch is recorded by type, and only then added to stock. The line from "Log downtime or flood" to the customer decision crosses the arrow between "Haul more material" and "Screen or crush"; it is a crossing only, not a connection.`),
+H('6.3 Recurring supporting procedures (daily, weekly, monthly)',3),B3,Pp(`<b>Discussion.</b> Each lane starts with a timer event. The daily cycle reconciles the physical stockpile to the ledger and needs owner approval for adjustments. The weekly cycle reviews loading variances and unpaid or uncleared cheques. The monthly cycle produces the production, downtime and sales report, updates master data and archives records. These are the moments when records are read for review, updated by approved adjustment, and finally archived.`),
+H('6.4 Administrative procedure: Void or Correct a Record',3),B4,Pp(`<b>Discussion.</b> Staff cannot change a posted record directly. They request a correction with a reason, the owner approves or rejects, and an approved void keeps the history before the corrected record is entered. This keeps the trail intact for the weekly discrepancy review.`),
+H('7. Problem Traceability'),`<div class="tw"><table><tr><th>Problem from the Statement</th><th>Where it appears</th><th>Design response</th></tr>
+<tr><td>Overlooked stock [A]</td><td>1.2, Gateway 1</td><td>Single ledger built from movement lines (2.1, 2.2)</td></tr>
+<tr><td>Shortages, lost sales [C]</td><td>1.2, 2.3, 6.2</td><td>Reservation, alerts, partial or later supply path</td></tr>
+<tr><td>Production limits [C]</td><td>6.4, 6.2</td><td>Downtime and flood log in D6</td></tr>
+<tr><td>Varying output [C]</td><td>6.3, 6.5</td><td>Batches record output by type; stock credited from batches</td></tr>
+<tr><td>Loading discrepancies [S]</td><td>3.3, 3.4, Gateway 2</td><td>Variance and linked batch stored in D3</td></tr>
+<tr><td>Delivery status on paper [S]</td><td>4.2</td><td>Shared status log D4</td></tr>
+<tr><td>Fragmented records [S]</td><td>Whole model, 7.5</td><td>Order no. links D1 to D6</td></tr></table></div>`,
+H('8. Specific Objectives'),`<div class="tw"><table><tr><th>#</th><th>Objective</th><th>Where met</th></tr>
+<tr><td>1</td><td>Record each order once</td><td>1.1, D1: one record with order no.; all later steps read it</td></tr>
+<tr><td>2</td><td>Stock per aggregate type visible before acceptance</td><td>1.2, 2.2, D2: live availability read before the quote</td></tr>
+<tr><td>3</td><td>Batches and output matched to stock</td><td>6.3, 6.5, 2.4, D6, D2: batch no. cited on stock receipt; daily count compares D2 to D6</td></tr>
+<tr><td>4</td><td>Ordered vs loaded differences recorded</td><td>3.3, 3.4, D3: both quantities stored, variance linked to order, load and additional batch</td></tr>
+<tr><td>5</td><td>Delivery status monitoring</td><td>4.1 to 4.3, D4: Preparing, Loaded, Dispatched, Completed (and Delayed)</td></tr>
+<tr><td>6</td><td>Related records retrieved together</td><td>7.5 and the order no. on every record in D1 to D6</td></tr>
+<tr><td>7</td><td>Payments linked to order and delivery</td><td>5.1 to 5.4, D5: order no. and delivery ref on each payment</td></tr></table></div>`,
+Pp(`<b>Note.</b> Two kinds of batch exist: production batches (D6) add stock, while additional batches from a loading variance (D3) adjust a single order. They must not be mixed.`),
+H('9. Unconfirmed Items and Interview Questions'),
+`<ol><li>How is a loading difference noticed when loaded quantity follows the order: counting trucks, customer complaint, weighing?</li><li>What does "another aggregate batch" mean in practice: a top-up load, a replacement, or a refund?</li><li>Is there an order number today, and is it on every paper record?</li><li>How is the amount due computed: per cubic meter, per truck, with delivery fees?</li><li>Who receives payment, and where does cash go at day end?</li><li>Does the owner review records, and how often?</li><li>How is the cubic meter volume of a truck verified?</li><li>Do government projects need extra documents such as delivery receipts?</li></ol>`
+];
+document.getElementById('c').innerHTML=doc.join('');
+</script></body></html>
